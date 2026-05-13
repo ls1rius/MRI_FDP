@@ -1,0 +1,121 @@
+model:
+  base_learning_rate: 2.0e-5
+  # base_learning_rate: 4.5e-6
+  target: ldm.models.diffusion.mri_ldm.MRILatentDiffusion
+  params:
+    ckpt_path: <path_to_stage2_ckpt> # "xxxx/checkpoints/epoch=000xxx.ckpt"
+    linear_start: 0.0015
+    linear_end: 0.0155
+    num_timesteps_cond: 1
+    log_every_t: 200
+    timesteps: 1000
+    loss_type: l1
+    first_stage_key: "image"
+    cond_stage_key: "image"
+    image_size: 32
+    channels: 4
+    scale_by_std: True
+    monitor: 'val/loss_simple_ema'
+    parameterization: 'x0'
+    saved_path: <directory_for_visualization_and_metrics>
+    mask_stage: 'None'
+    mask_strategy: 'None'
+    m_ratio: 0.5
+    max_rectangles: 256
+    test_num: 3
+    rlfs_ratio: 0.10
+    frq_mask_ratio: 0.10
+    stage1: False
+    use_prior: False
+    cond_stage_trainable: True
+    conditioning_key: concat
+    cond_stage_forward: remove_low_frequency_add_noise
+    cond_stage_config: 
+      target: ldm.modules.mri_modules.MRICrossFusion
+      params:
+        image_size: 32
+        n_embed: 4
+        n_layer: 8
+        n_channels: 4
+        n_prior_head: 128
+        frq_mask_ratio: 0.10
+
+
+    unet_config:
+      target: ldm.modules.diffusionmodules.openaimodel.UNetModel
+      params:
+        image_size: 32
+        in_channels: 12
+        out_channels: 4
+        model_channels: 192
+        attention_resolutions: [ 1, 2, 4, 8]   # 32, 16, 8, 4
+        num_res_blocks: 2
+        channel_mult: [ 1, 2, 2, 4, 4]  # 32, 16, 8, 4, 2
+        num_heads: 8
+        use_scale_shift_norm: True
+        resblock_updown: True
+
+    first_stage_config:
+      target: ldm.models.mri_vae.MRIVAE
+      params:
+        ckpt_path: <path_to_vae_ckpt> 
+        embed_dim: 4
+        monitor: "val/rec_loss"
+        ddconfig:
+          double_z: True
+          z_channels: 4
+          resolution: 256
+          in_channels: 1
+          out_ch: 1
+          ch: 128
+          ch_mult: [ 1, 2, 4, 4]
+          num_res_blocks: 2
+          attn_resolutions: [ ]
+          dropout: 0.0
+        lossconfig:
+          target: torch.nn.Identity
+
+data:
+  target: main.DataModuleFromConfig
+  params:
+    batch_size: 8
+    num_workers: 4
+    wrap: False
+    train:
+      target: ldm.data.mri.MRIIXITrain
+      params:
+        data_root: # 'xxxx/preprocessing/v2skullstripped/<dataset>/t2_train'
+        size: 256
+        k: list of id # only test samples with these character suffixes. ['_136', '_347', '_286', '_301', '_017', '_337', '_163', '_054', '_037', '_046', '_326', '_244', '_245', '_118', '_021', '_023', '_303', '_282', '_112', '_330', '_160', '_271', '_041', '_294', '_032', '_275', '_131', '_069', '_122', '_025', '_080', '_235', '_284', '_172', '_317', '_243', '_224', '_179', '_090', '_019', '_015', '_167', '_229', '_030', '_223', '_206', '_088', '_166', '_342', '_248']
+        stage: 'test'
+    validation:
+      target: ldm.data.mri.MRIIXIValidation
+      params:
+        data_root: # 'xxxx/preprocessing/v2skullstripped/<dataset>/t2_val'
+        size: 256
+        k: list of id # only test samples with these character suffixes. ['_136', '_347', '_286', '_301', '_017', '_337', '_163', '_054', '_037', '_046', '_326', '_244', '_245', '_118', '_021', '_023', '_303', '_282', '_112', '_330', '_160', '_271', '_041', '_294', '_032', '_275', '_131', '_069', '_122', '_025', '_080', '_235', '_284', '_172', '_317', '_243', '_224', '_179', '_090', '_019', '_015', '_167', '_229', '_030', '_223', '_206', '_088', '_166', '_342', '_248']
+        stage: 'test'
+    test:
+
+      target: ldm.data.mri.MRITest
+      params:
+        data_root: # 'xxxx/preprocessing/v2skullstripped/<dataset>/t2_test'
+        size: 256
+        is_test: True
+        k: list of id # only test samples with these character suffixes. ['_136', '_347', '_286', '_301', '_017', '_337', '_163', '_054', '_037', '_046', '_326', '_244', '_245', '_118', '_021', '_023', '_303', '_282', '_112', '_330', '_160', '_271', '_041', '_294', '_032', '_275', '_131', '_069', '_122', '_025', '_080', '_235', '_284', '_172', '_317', '_243', '_224', '_179', '_090', '_019', '_015', '_167', '_229', '_030', '_223', '_206', '_088', '_166', '_342', '_248']
+        stage: 'test'
+
+
+lightning:
+  callbacks:
+    image_logger:
+      target: main.ImageLogger
+      params:
+        batch_frequency: 50000
+        max_images: 8
+        increase_log_steps: False
+
+  trainer:
+    benchmark: True
+    max_epochs: 800
+    check_val_every_n_epoch: 5
