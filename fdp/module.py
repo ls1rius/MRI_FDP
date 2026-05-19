@@ -194,19 +194,9 @@ class FDPModule(nn.Module):
         """
         Stage-1 training losses for the FRM.
 
-        Sub-losses:
-          loss_real  — L1 between predicted and true low-freq real component
-                       (primary FRM objective, eq. in paper)
-          loss_imag  — L1 between predicted and true low-freq imaginary component
-          loss_frec  — L1 between the full frequency-reconstructed output (frec)
-                       and the original input; measures reconstruction quality
-                       (should decrease as the FRM improves on healthy data)
-          loss       — total = loss_real + loss_imag + λ * loss_frec
-                       (λ=0.1 keeps frec term from dominating early training)
-
         Returns:
             loss       : scalar total loss for .backward()
-            loss_dict  : {'loss', 'loss_real', 'loss_imag', 'loss_frec'}
+            loss_dict  : {'loss', 'loss_real', 'loss_imag'}
         """
         fl = get_low_frequency(x, self.mask_ratio)
         N = x.shape[0]
@@ -220,13 +210,11 @@ class FDPModule(nn.Module):
         loss_real = F.l1_loss(pred_r, fl.real)
         loss_imag = F.l1_loss(pred_i, fl.imag)
         loss = loss_real + loss_imag
-        loss_frec = loss_real.new_zeros([])
 
         loss_dict = {
             "loss":      loss,
             "loss_real": loss_real,
             "loss_imag": loss_imag,
-            "loss_frec": loss_frec,
         }
         return loss, loss_dict
 
