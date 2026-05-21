@@ -148,7 +148,7 @@ class FDPLightningModule(pl.LightningModule):
         self.log("val/loss_imag", d["loss_imag"], on_step=False, on_epoch=True, sync_dist=True)
 
     def configure_optimizers(self):
-        opt = torch.optim.Adam(self.model.parameters(), lr=self.hparams.lr)
+        opt = torch.optim.AdamW(self.model.parameters(), lr=self.hparams.lr, weight_decay=0.01)
         sched_name = self.hparams.scheduler
 
         if sched_name == "none":
@@ -449,8 +449,7 @@ def main():
     # ── Trainer ──────────────────────────────────────────────────────────────
     n_gpu    = torch.cuda.device_count()
     devices  = args.devices or min(n_gpu, 4) or 1
-    # find_unused_parameters=True required because frm_imag / prior_imag are not
-    # used in the forward pass while the imag branch is disabled.
+    # used in the training forward pass.
     strategy = "ddp_find_unused_parameters_true" if devices > 1 else "auto"
 
     trainer = pl.Trainer(

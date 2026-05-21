@@ -53,7 +53,7 @@ def _kmeans(patches, n_clusters, minibatch=False):
         km = MiniBatchKMeans(
             n_clusters=n_clusters,
             init="k-means++",
-            random_state=0,
+            random_state=42,
             n_init=3,
             batch_size=4096,
         )
@@ -61,7 +61,7 @@ def _kmeans(patches, n_clusters, minibatch=False):
         km = KMeans(
             n_clusters=n_clusters,
             init="k-means++",
-            random_state=0,
+            random_state=42,
             n_init=32,
             max_iter=1280,
         )

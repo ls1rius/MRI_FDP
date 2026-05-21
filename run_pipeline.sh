@@ -73,9 +73,9 @@ trap '_shutdown' INT TERM
 export PYTHONUNBUFFERED=1
 
 # ── Hyperparameters ───────────────────────────────────────────────────────────
-FDP_MIN_EPOCHS=100  ;  FDP_MAX_EPOCHS=200   ;  FDP_BATCH=8  ;  FDP_VAL_EVERY=5  ;  FDP_EARLY_STOPPING_PATIENCE=10
+FDP_MIN_EPOCHS=200  ;  FDP_MAX_EPOCHS=300   ;  FDP_BATCH=8  ;  FDP_VAL_EVERY=5  ;  FDP_EARLY_STOPPING_PATIENCE=10
 VAE_MIN_EPOCHS=800  ;  VAE_MAX_EPOCHS=1000  ;  VAE_BATCH=8  ;  VAE_VAL_EVERY=5  ;  VAE_EARLY_STOPPING_PATIENCE=10
-LDM_MIN_EPOCHS=800  ;  LDM_MAX_EPOCHS=1000  ;  LDM_BATCH=8  ;  LDM_VAL_EVERY=5  ;  LDM_EARLY_STOPPING_PATIENCE=10
+LDM_MIN_EPOCHS=600  ;  LDM_MAX_EPOCHS=800   ;  LDM_BATCH=8  ;  LDM_VAL_EVERY=5  ;  LDM_EARLY_STOPPING_PATIENCE=10
 VAL_MAX_SAMPLES=32
 
 # ── Pretrained checkpoints (used when running a single stage) ────────────────
@@ -83,9 +83,6 @@ VAL_MAX_SAMPLES=32
 PRETRAIN_FDP_CKPT=""
 PRETRAIN_VAE_CKPT=""
 PRETRAIN_LDM_CKPT=""
-# PRETRAIN_FDP_CKPT="$LOGS/2026-05-18T23-43-31_full_pipeline/fdp/checkpoints/best.ckpt"
-# PRETRAIN_VAE_CKPT="$LOGS/2026-05-18T23-43-31_full_pipeline/vae/checkpoints/best.ckpt"
-# PRETRAIN_LDM_CKPT="$LOGS/2026-05-18T23-43-31_full_pipeline/ldm/checkpoints/best.ckpt"
 
 # ── Stage selector ───────────────────────────────────────────────────────────
 # FULL_PIPELINE=1 → fresh run, checkpoints passed between stages via PIPELINE_*

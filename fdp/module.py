@@ -50,7 +50,7 @@ class CrossAttention(nn.Module):
         self.to_q = nn.Linear(dim, inner, bias=False)
         self.to_k = nn.Linear(dim, inner, bias=False)
         self.to_v = nn.Linear(dim, inner, bias=False)
-        self.to_out = nn.Linear(inner, dim, bias=False)
+        self.to_out = nn.Linear(inner, dim)
         self.attn_drop = nn.Dropout(dropout)
 
     def forward(self, q: torch.Tensor, kv: torch.Tensor) -> torch.Tensor:
@@ -123,7 +123,7 @@ class FDPModule(nn.Module):
         ckpt_path: Optional[str] = None,
         dim_head: int = 64,
         heads: int = 8,
-        dropout: float = 0.2,
+        dropout: float = 0.0,
     ):
         super().__init__()
         self.mask_ratio = mask_ratio
@@ -162,18 +162,23 @@ class FDPModule(nn.Module):
         h2 = self.mh // 2
         return proto[:, :, crow - h2: crow + h2, ccol - h2: ccol + h2].contiguous()
 
-    def _predict_low_freq(self, fl: torch.Tensor) -> torch.Tensor:
+    def _predict_low_freq(self, fl: torch.Tensor, norm_scale: bool = False) -> torch.Tensor:
         N = fl.shape[0]
         prior_r = self._crop_prior(self.prior_real, N)
         # prior_i = self._crop_prior(self.prior_imag, N)
 
         pred_r = self.frm_real(fl.real, prior_r)
-        # Imag branch is not trained: near DC the imaginary component is theoretically ~0
-        # so zeroing it has negligible effect on the reconstructed magnitude image.
-        # To re-enable imag training: uncomment the line below and remove zeros_like.
-        # pred_i = self.frm_imag(fl.imag, prior_i)
         pred_i = torch.zeros_like(pred_r)
-        # pred_i = torch.randn_like(pred_r) * 1e-6  # small random noise to break ties in magnitude when imag is zero
+        # pred_i = self.frm_imag(fl.imag, prior_i)
+
+        if norm_scale:
+            scale_r = (torch.linalg.norm(fl.real.flatten(1), dim=-1) /
+                       (torch.linalg.norm(pred_r.flatten(1), dim=-1) + 1e-8)).reshape(N, 1, 1, 1)
+            pred_r = pred_r * scale_r
+            # scale_i = (torch.linalg.norm(fl.imag.flatten(1), dim=-1) /
+            #            (torch.linalg.norm(pred_i.flatten(1), dim=-1) + 1e-8)).reshape(N, 1, 1, 1)
+            # pred_i = pred_i * scale_i
+
         return torch.complex(pred_r, pred_i)
 
     def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
@@ -210,6 +215,7 @@ class FDPModule(nn.Module):
         loss_real = F.l1_loss(pred_r, fl.real)
         loss_imag = F.l1_loss(pred_i, fl.imag)
         loss = loss_real + loss_imag
+        # loss = loss_real
 
         loss_dict = {
             "loss":      loss,

@@ -214,6 +214,12 @@ We thank [Claude](https://claude.ai) (Anthropic) for assistance with code organi
 
 ---
 
+## A Note to Future Researchers
+
+We recognise that our exploration of this direction is far from exhaustive, and that the frequency-decomposition idea and the FRM design leave substantial room for deeper investigation. We share this codebase hoping it serves as a concrete, reproducible starting point for others who wish to build on, challenge, or fundamentally rethink these ideas. If it saves you time or sparks a new direction, that is reward enough.
+
+---
+
 ## Citation
 
 ```bibtex

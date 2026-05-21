@@ -2,7 +2,7 @@ fdp:
   n_prior: 128
   mask_ratio: 0.10
   img_size: 256
-  dropout: 0.2
+  dropout: 0.0
   # Pre-trained k-means++ prior banks (already available in preload/).
   prior_path_real: preload/t2_hf_0d3_embed_128ac_real_frq.pth
   prior_path_imag: preload/t2_hf_0d3_embed_128ac_imag_frq.pth
@@ -11,7 +11,7 @@ data:
   train_root: data/IXI-T2-hd
   val_root: null   # set to null to disable validation
   size: 256
-  random_sample: false   # false = slice-level index (~75k slices); true = subject-level (578 subjects, too few for large batches)
+  random_sample: true    # true = subject-level (578 subjects/epoch), matches complex reference
 
 train:
   epochs: 800
@@ -22,7 +22,7 @@ train:
   # lr: 5.0e-4              # 2.0e-5
   # min_lr: 1.0e-5          # lower bound for schedulers
   warmup_epochs: 10       # linear warmup (cosine only)
-  scheduler: sgdr         # sgdr | cyclic | cosine | plateau | none
+  scheduler: none         # none = constant lr, matches complex reference (no scheduler in stage1)
   sgdr_t0: 50             # initial restart period (epochs)
   sgdr_t_mult: 2          # period multiplier per restart (50→100→200→400…)
   cyclic_step_epochs: 50  # epochs per half-cycle (cyclic only)
