@@ -7,6 +7,8 @@
 
 FDP is a plug-and-play preprocessing module that suppresses lesion-related low-frequency content in MRI by replacing it with a healthy reconstruction sampled from a learned prior context bank, then outputs two conditioning signals for a downstream generative model.
 
+> **Data Preprocessing Requirement:** Training data must first be skull-stripped using [HD-BET](https://github.com/MIC-DKFZ/HD-BET) before being used with this pipeline.
+
 ---
 
 ## Key Insight
